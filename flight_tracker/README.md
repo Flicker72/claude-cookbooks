@@ -11,13 +11,17 @@ aircraft positions worldwide on a dark world map, sourced from the
 
 - 🌍 **Live worldwide flights** — real ADS-B positions, refreshed every ~10s
 - ✈ **Heading-rotated aircraft icons**, colour-coded by altitude
-- 🖱 **Click any aircraft** for callsign, altitude, speed, heading, vertical
-  rate, position, ICAO24, squawk and status
+- 🖱 **Click any aircraft** for airline, callsign, altitude, speed, heading,
+  vertical rate, position, ICAO24, squawk and status
+- 🏷 **Airline identification** — decodes the ICAO operator prefix in each
+  callsign (e.g. `BAW123` → British Airways)
+- 🛫 **Major airports layer** — a curated set of ~75 world hubs, toggleable,
+  with hover tooltips
 - 🧭 **Follow mode** — keep the map centred on a chosen flight
 - 🛰 **Flight trails** built client-side as aircraft move
-- 🔎 **Search** by callsign, country, or ICAO24 address
+- 🔎 **Search** by callsign, airline, country, or ICAO24 address
 - 🎚 **Filters** — minimum altitude, hide ground traffic, toggle trails,
-  pause auto-refresh
+  toggle airports, pause auto-refresh
 - ⚡ **Viewport-aware fetching** — only requests aircraft in the current
   map view when zoomed in, keeping responses small and fast
 - 🔌 **Zero dependencies** — the backend uses only the Python standard
@@ -70,8 +74,9 @@ server.py  ──►  caches (≈8s)  ──►  OpenSky /api/states/all
   named-field JSON), caches results per-viewport, and optionally
   authenticates via OAuth2.
 - **`frontend/`** — the single-page app: `config.js` (constants, altitude
-  colour scale, formatters), `api.js` (backend client), and `app.js`
-  (map, markers, trails, search, filters, detail panel).
+  colour scale, formatters), `airlines.js` (ICAO operator-code lookup),
+  `airports.js` (major-airport dataset), `api.js` (backend client), and
+  `app.js` (map, markers, trails, airports, search, filters, detail panel).
 
 ## Configuration
 

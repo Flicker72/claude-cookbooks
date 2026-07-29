@@ -8,6 +8,7 @@
     map: null,
     aircraftLayer: null,
     trailLayer: null,
+    airportLayer: null,
     markers: new Map(), // icao24 -> { marker, data }
     trails: new Map(), // icao24 -> { line, points: [[lat,lon],...] }
     selected: null, // icao24 of selected aircraft
@@ -20,6 +21,7 @@
       showGround: true,
       autoRefresh: true,
       showTrails: true,
+      showAirports: false,
     },
   };
 
@@ -74,12 +76,14 @@
     ).addTo(map);
 
     state.trailLayer = L.layerGroup().addTo(map);
+    state.airportLayer = L.layerGroup().addTo(map);
     state.aircraftLayer = L.layerGroup().addTo(map);
     state.map = map;
 
     map.on("moveend", () => {
       // When the user pans/zooms, refresh the viewport promptly.
       scheduleImmediate();
+      if (state.filters.showAirports) renderAirports();
     });
     map.on("click", () => deselect());
   }
@@ -226,6 +230,37 @@
     for (const id of Array.from(state.trails.keys())) removeTrail(id);
   }
 
+  // ---- Airports layer -----------------------------------------------------
+  function airportIcon(showLabel, iata) {
+    return L.divIcon({
+      className: "airport-marker",
+      html:
+        `<div class="airport-icon"><span class="airport-dot"></span>` +
+        (showLabel ? `<span class="airport-label">&nbsp;${iata}</span>` : "") +
+        `</div>`,
+      iconSize: showLabel ? [56, 14] : [14, 14],
+      iconAnchor: showLabel ? [7, 7] : [7, 7],
+    });
+  }
+
+  function renderAirports() {
+    state.airportLayer.clearLayers();
+    if (!state.filters.showAirports) return;
+    const showLabels = state.map.getZoom() >= 5;
+    for (const ap of AIRPORTS) {
+      const marker = L.marker([ap.lat, ap.lon], {
+        icon: airportIcon(showLabels, ap.iata),
+        interactive: true,
+        keyboard: false,
+      });
+      marker.bindTooltip(
+        `<b>${ap.name}</b> (${ap.iata}/${ap.icao})<br>${ap.city}, ${ap.country}`,
+        { className: "airport-tooltip", direction: "top", offset: [0, -6] }
+      );
+      marker.addTo(state.airportLayer);
+    }
+  }
+
   // ---- Selection & detail panel ------------------------------------------
   function select(icao24) {
     state.selected = icao24;
@@ -260,6 +295,8 @@
   function fillDetail(ac) {
     const g = (id) => document.getElementById(id);
     g("d-callsign").textContent = ac.callsign || "(no callsign)";
+    const airline = lookupAirline(ac.callsign);
+    g("d-airline").textContent = airline ? `${airline.name} (${airline.code})` : "";
     g("d-country").textContent = ac.origin_country || "Unknown origin";
     g("d-altitude").textContent = fmtAltitude(ac.baro_altitude);
     g("d-speed").textContent = fmtSpeed(ac.velocity);
@@ -281,10 +318,12 @@
 
     const matches = state.lastData
       .filter((ac) => {
+        const airline = lookupAirline(ac.callsign);
         return (
           (ac.callsign && ac.callsign.toLowerCase().includes(q)) ||
           (ac.icao24 && ac.icao24.toLowerCase().includes(q)) ||
-          (ac.origin_country && ac.origin_country.toLowerCase().includes(q))
+          (ac.origin_country && ac.origin_country.toLowerCase().includes(q)) ||
+          (airline && airline.name.toLowerCase().includes(q))
         );
       })
       .slice(0, 40);
@@ -296,14 +335,15 @@
     }
 
     box.innerHTML = matches
-      .map(
-        (ac) =>
+      .map((ac) => {
+        const airline = lookupAirline(ac.callsign);
+        const meta = airline ? airline.name : ac.origin_country || "";
+        return (
           `<div class="search-item" data-icao="${ac.icao24}">` +
           `<span class="si-call">${ac.callsign || ac.icao24.toUpperCase()}</span>` +
-          `<span class="si-meta">${ac.origin_country || ""} · ${fmtAltitude(
-            ac.baro_altitude
-          )}</span></div>`
-      )
+          `<span class="si-meta">${meta} · ${fmtAltitude(ac.baro_altitude)}</span></div>`
+        );
+      })
       .join("");
     box.classList.remove("hidden");
 
@@ -386,6 +426,11 @@
     document.getElementById("show-trails").addEventListener("change", (e) => {
       state.filters.showTrails = e.target.checked;
       if (!e.target.checked) clearAllTrails();
+    });
+
+    document.getElementById("show-airports").addEventListener("change", (e) => {
+      state.filters.showAirports = e.target.checked;
+      renderAirports();
     });
 
     document.getElementById("auto-refresh").addEventListener("change", (e) => {

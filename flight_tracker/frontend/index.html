@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Worldwide Flight Tracker</title>
+
+    <!-- Leaflet map library -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJ4hf2q2q7Uz2VgMFh7Ip2GxIjPnU="
+      crossorigin=""
+    ></script>
+
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <!-- Top bar --------------------------------------------------------- -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">✈</span>
+        <span class="brand-name">Worldwide Flight Tracker</span>
+      </div>
+
+      <div class="search">
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Search callsign, country, or ICAO24…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div id="search-results" class="search-results hidden"></div>
+      </div>
+
+      <div class="topbar-stats">
+        <div class="stat">
+          <span id="stat-visible" class="stat-value">0</span>
+          <span class="stat-label">in view</span>
+        </div>
+        <div class="stat">
+          <span id="stat-updated" class="stat-value">—</span>
+          <span class="stat-label">updated</span>
+        </div>
+        <div id="conn-dot" class="conn-dot" title="Connecting…"></div>
+      </div>
+    </header>
+
+    <!-- Filters panel --------------------------------------------------- -->
+    <aside class="filters" id="filters">
+      <button class="filters-toggle" id="filters-toggle" title="Toggle filters">
+        ⚙
+      </button>
+      <div class="filters-body">
+        <h3>Filters</h3>
+
+        <label class="field">
+          <span>Minimum altitude: <b id="alt-min-label">0 ft</b></span>
+          <input id="alt-min" type="range" min="0" max="45000" step="1000" value="0" />
+        </label>
+
+        <label class="field checkbox">
+          <input id="show-ground" type="checkbox" checked />
+          <span>Show aircraft on the ground</span>
+        </label>
+
+        <label class="field checkbox">
+          <input id="auto-refresh" type="checkbox" checked />
+          <span>Auto-refresh (<span id="refresh-secs">10</span>s)</span>
+        </label>
+
+        <label class="field checkbox">
+          <input id="show-trails" type="checkbox" checked />
+          <span>Show flight trails</span>
+        </label>
+
+        <button id="refresh-now" class="btn">Refresh now</button>
+
+        <div class="legend">
+          <h4>Altitude</h4>
+          <div class="legend-scale">
+            <span class="swatch" style="background: #e40b0b"></span>
+            <span class="swatch" style="background: #f5a623"></span>
+            <span class="swatch" style="background: #f8e71c"></span>
+            <span class="swatch" style="background: #7ed321"></span>
+            <span class="swatch" style="background: #4a90e2"></span>
+            <span class="swatch" style="background: #9013fe"></span>
+          </div>
+          <div class="legend-range">
+            <span>ground</span>
+            <span>40k+ ft</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Aircraft detail panel ------------------------------------------- -->
+    <section class="detail hidden" id="detail">
+      <button class="detail-close" id="detail-close" title="Close">×</button>
+      <div class="detail-header">
+        <div class="detail-callsign" id="d-callsign">—</div>
+        <div class="detail-sub" id="d-country">—</div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="d-label">Altitude</span>
+          <span class="d-value" id="d-altitude">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="d-label">Ground speed</span>
+          <span class="d-value" id="d-speed">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="d-label">Heading</span>
+          <span class="d-value" id="d-heading">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="d-label">Vertical rate</span>
+          <span class="d-value" id="d-vrate">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="d-label">Position</span>
+          <span class="d-value" id="d-position">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="d-label">ICAO24</span>
+          <span class="d-value" id="d-icao">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="d-label">Squawk</span>
+          <span class="d-value" id="d-squawk">—</span>
+        </div>
+        <div class="detail-item">
+          <span class="d-label">Status</span>
+          <span class="d-value" id="d-status">—</span>
+        </div>
+      </div>
+      <button id="d-follow" class="btn btn-follow">Follow this aircraft</button>
+      <a id="d-external" class="detail-link" target="_blank" rel="noopener"
+        >View on OpenSky ↗</a
+      >
+    </section>
+
+    <!-- Error / notice toast -------------------------------------------- -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

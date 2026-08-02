@@ -1,0 +1,52 @@
+name: Android CI (proximity-dating-app)
+
+# Builds and unit-tests the HoliDate Android app so the project is continuously
+# compiled. Scoped by path so it only runs when the app (or this workflow) changes.
+on:
+  push:
+    paths:
+      - "proximity-dating-app/**"
+      - ".github/workflows/android-ci.yml"
+  pull_request:
+    paths:
+      - "proximity-dating-app/**"
+      - ".github/workflows/android-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Assemble & unit test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: proximity-dating-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: holidate-debug-apk
+          path: proximity-dating-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn

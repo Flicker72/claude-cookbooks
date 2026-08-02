@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">HoliDate</string>
+
+    <string name="mesh_channel_name">Nearby mesh</string>
+    <string name="mesh_running_title">HoliDate is discovering people nearby</string>
+    <string name="mesh_running_text">Relaying messages across nearby phones</string>
+
+    <string name="onboarding_title">Create your profile</string>
+    <string name="field_name">Display name</string>
+    <string name="field_age">Age</string>
+    <string name="field_bio">About you</string>
+    <string name="field_interests">Interests (comma separated)</string>
+    <string name="save_profile">Start meeting people</string>
+
+    <string name="tab_discover">Discover</string>
+    <string name="tab_matches">Matches</string>
+    <string name="tab_profile">Profile</string>
+
+    <string name="mesh_on">Mesh on</string>
+    <string name="mesh_off">Mesh off</string>
+    <string name="peers_nearby">%1$d nearby</string>
+
+    <string name="no_one_around">No one around yet</string>
+    <string name="no_one_around_hint">Keep the app open. As other HoliDate users come within range — directly or relayed through other phones — they will appear here.</string>
+
+    <string name="like">Like</string>
+    <string name="pass">Pass</string>
+
+    <string name="no_matches">No matches yet</string>
+    <string name="no_matches_hint">When someone you liked likes you back, they show up here and you can start chatting.</string>
+
+    <string name="its_a_match">It\'s a match!</string>
+    <string name="send_hint">Message</string>
+    <string name="send">Send</string>
+    <string name="delivered">Delivered</string>
+
+    <string name="permissions_needed">HoliDate needs nearby-device permissions</string>
+    <string name="permissions_rationale">To find people around you, HoliDate uses Bluetooth and Wi-Fi to talk to nearby phones. Nothing leaves your phone through the internet.</string>
+    <string name="grant_permissions">Grant permissions</string>
+</resources>

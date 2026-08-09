@@ -103,6 +103,23 @@ Requirements: **Android Studio** (Ladybug or newer) and the **Android SDK** (com
 # Or just open the proximity-dating-app/ folder in Android Studio and press Run.
 ```
 
+### Release (signed) build
+
+The release build is signed only when signing details are supplied via environment variables —
+nothing secret is ever committed:
+
+```bash
+RELEASE_STORE_FILE=/path/to/your.jks \
+RELEASE_STORE_PASSWORD=... \
+RELEASE_KEY_ALIAS=... \
+RELEASE_KEY_PASSWORD=... \
+./gradlew :app:assembleRelease
+```
+
+Without those variables, `assembleRelease` still succeeds but produces an *unsigned* APK. CI
+builds a signed release APK using a throwaway key generated on the runner and publishes it as the
+`holidate-release-apk` artifact; for a real Play Store release, sign with your own upload key.
+
 Install the resulting APK on **two or more physical Android phones** (Nearby Connections needs
 real Bluetooth/Wi-Fi radios — the emulator can't do proximity), grant the nearby-device
 permissions, create a profile on each, and they will discover each other within range.

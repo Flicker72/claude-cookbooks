@@ -20,6 +20,20 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    signingConfigs {
+        // Release signing is driven entirely by environment variables so no keystore or
+        // password is ever committed. When they are absent (local dev, CI without a key),
+        // the release build is simply left unsigned.
+        create("release") {
+            System.getenv("RELEASE_STORE_FILE")?.let { storePath ->
+                storeFile = file(storePath)
+                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -27,6 +41,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (System.getenv("RELEASE_STORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

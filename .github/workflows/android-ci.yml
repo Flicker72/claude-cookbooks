@@ -54,6 +54,8 @@ jobs:
   release:
     name: Signed release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to publish the APK as a GitHub Release asset
     defaults:
       run:
         working-directory: proximity-dating-app
@@ -93,10 +95,30 @@ jobs:
           RELEASE_KEY_PASSWORD: holidate-ci
         run: ./gradlew :app:assembleRelease --stacktrace
 
-      - name: Upload signed release APK
+      - name: Upload signed release APK (build artifact)
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: holidate-release-apk
           path: proximity-dating-app/app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
+
+      # Publish the APK to a GitHub Release so it has a direct, login-free download link
+      # that installs straight from an Android phone's browser (no zip, no GitHub sign-in).
+      # Updates a single rolling pre-release on each push to the branch.
+      - name: Publish APK to GitHub Release
+        if: success() && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: holidate-latest
+          name: HoliDate — latest test build
+          prerelease: true
+          body: |
+            Latest test build of the HoliDate proximity mesh dating app.
+
+            Direct APK download (open on your Android phone):
+            https://github.com/${{ github.repository }}/releases/download/holidate-latest/app-release.apk
+
+            Note: test-signed with an ephemeral key (fine for sideloading, not a Play upload key),
+            and it needs at least two real phones running the app to discover anyone.
+          files: proximity-dating-app/app/build/outputs/apk/release/app-release.apk

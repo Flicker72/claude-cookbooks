@@ -1,0 +1,124 @@
+name: Android CI (proximity-dating-app)
+
+# Builds and unit-tests the HoliDate Android app so the project is continuously
+# compiled. Scoped by path so it only runs when the app (or this workflow) changes.
+on:
+  push:
+    paths:
+      - "proximity-dating-app/**"
+      - ".github/workflows/android-ci.yml"
+  pull_request:
+    paths:
+      - "proximity-dating-app/**"
+      - ".github/workflows/android-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Assemble & unit test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: proximity-dating-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: holidate-debug-apk
+          path: proximity-dating-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+  release:
+    name: Signed release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to publish the APK as a GitHub Release asset
+    defaults:
+      run:
+        working-directory: proximity-dating-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Generates a throwaway signing key on the runner each build. It is never committed
+      # and is discarded when the runner is torn down, so a signed, installable release APK
+      # can be produced without any repository secret. For a real Play Store release, replace
+      # this step by loading your own keystore from a secret and remove the hardcoded password.
+      - name: Generate ephemeral release signing key
+        run: |
+          keytool -genkeypair -v \
+            -keystore "$RUNNER_TEMP/holidate-release.jks" \
+            -alias holidate \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass holidate-ci -keypass holidate-ci \
+            -dname "CN=HoliDate, OU=Dev, O=HoliDate, C=GB"
+
+      - name: Assemble signed release APK
+        env:
+          RELEASE_STORE_FILE: ${{ runner.temp }}/holidate-release.jks
+          RELEASE_STORE_PASSWORD: holidate-ci
+          RELEASE_KEY_ALIAS: holidate
+          RELEASE_KEY_PASSWORD: holidate-ci
+        run: ./gradlew :app:assembleRelease --stacktrace
+
+      - name: Upload signed release APK (build artifact)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: holidate-release-apk
+          path: proximity-dating-app/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      # Publish the APK to a GitHub Release so it has a direct, login-free download link
+      # that installs straight from an Android phone's browser (no zip, no GitHub sign-in).
+      # Updates a single rolling pre-release on each push to the branch.
+      - name: Publish APK to GitHub Release
+        if: success() && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: holidate-latest
+          name: HoliDate — latest test build
+          prerelease: true
+          body: |
+            Latest test build of the HoliDate proximity mesh dating app.
+
+            Direct APK download (open on your Android phone):
+            https://github.com/${{ github.repository }}/releases/download/holidate-latest/app-release.apk
+
+            Note: test-signed with an ephemeral key (fine for sideloading, not a Play upload key),
+            and it needs at least two real phones running the app to discover anyone.
+          files: proximity-dating-app/app/build/outputs/apk/release/app-release.apk

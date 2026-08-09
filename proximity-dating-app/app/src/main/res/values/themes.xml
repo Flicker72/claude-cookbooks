@@ -1,0 +1,4 @@
+<resources>
+    <!-- Base theme; Compose drives the real colors at runtime via HoliDateTheme. -->
+    <style name="Theme.HoliDate" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
